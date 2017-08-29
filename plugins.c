@@ -8,6 +8,9 @@
 
 /***** Plugin "clip" *****/
 
+/* Clips the input signal to to the interval `[-level, level]`.
+ */
+
 typedef struct _Data_clip {
 	LADSPA_Data *in;
 	LADSPA_Data *out;
@@ -86,6 +89,11 @@ const LADSPA_Descriptor clip_descriptor = {
 };
 
 /***** Plugin "astro_amp" *****/
+
+/* This is more-or-less a hack to support poor hosts that assume unreasonable
+ * upper bounds when LADSPA_HINT_BOUNDED_ABOVE isn't set (e.g., non-mixer sets
+ * it to 1.0). If you have a good host, prefer the CMT amp_* instead.
+ */
 
 typedef struct _Data_astro_amp {
 	LADSPA_Data *in;
