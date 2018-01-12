@@ -15,3 +15,8 @@ Clips the input signal to to the interval `[-level, level]`.
 This is more-or-less a hack to support poor hosts that assume unreasonable
 upper bounds when LADSPA_HINT_BOUNDED_ABOVE isn't set (e.g., non-mixer sets
 it to 1.0). If you have a good host, prefer the CMT amp_* instead.
+
+## Plugin clicks_pops
+Generates a bunch of clicks and pops like an old record might.  This is an
+intentionally quite naive algorithm; it uses the platform random() PRNG and
+will generate white noise if you set the threshold low.

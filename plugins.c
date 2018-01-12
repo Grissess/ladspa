@@ -171,11 +171,89 @@ const LADSPA_Descriptor astro_amp_descriptor = {
 	.cleanup = astro_amp_cleanup,
 };
 
+/***** Plugin "clicks_pops" *****/
+
+/* Generates a bunch of clicks and pops like an old record might.  This is an
+ * intentionally quite naive algorithm; it uses the platform random() PRNG and
+ * will generate white noise if you set the threshold low.
+ */
+
+typedef struct _Data_clicks_pops {
+	LADSPA_Data *out;
+	LADSPA_Data *rthres;
+} Data_clicks_pops;
+
+Data_clicks_pops *clicks_pops_instantiate(const LADSPA_Descriptor *desc, unsigned long sr) {
+	return calloc(1, sizeof(Data_clicks_pops));
+}
+
+void clicks_pops_connect_port(Data_clicks_pops *self, unsigned long port, LADSPA_Data *loc) {
+	switch(port) {
+		case 0: self->out = loc; break;
+		case 1: self->rthres = loc; break;
+	}
+}
+
+void clicks_pops_run(Data_clicks_pops *self, unsigned long samps) {
+	LADSPA_Data rthres;
+	unsigned long i;
+
+	if(!self->out || !self->rthres) return;
+
+	rthres = *(self->rthres);
+
+	for(i = 0; i < samps; i++) {
+		self->out[i] = ((random() / (float) RAND_MAX) <= rthres)? (random() / (LADSPA_Data) RAND_MAX) : 0.0;
+	}
+}
+
+void clicks_pops_cleanup(Data_clicks_pops *self) {
+	free(self);
+}
+
+const LADSPA_PortDescriptor clicks_pops_port_descriptors[] = {
+	LADSPA_PORT_OUTPUT | LADSPA_PORT_AUDIO,
+	LADSPA_PORT_INPUT | LADSPA_PORT_CONTROL,
+};
+
+const char *clicks_pops_port_names[] = {
+	"out",
+	"rthres",
+};
+
+const LADSPA_PortRangeHint clicks_pops_port_range_hints[] = {
+	{0, 0.0, 0.0},
+	{LADSPA_HINT_BOUNDED_BELOW | LADSPA_HINT_BOUNDED_ABOVE | LADSPA_HINT_DEFAULT_LOW, 0.0, 1.0},
+};
+
+const LADSPA_Descriptor clicks_pops_descriptor = {
+	.UniqueID = 0x773,
+	.Label = "clicks_pops",
+	.Properties = LADSPA_PROPERTY_HARD_RT_CAPABLE,
+	.Name = "GP: Clicks and Pops",
+	.Maker = MAKER,
+	.Copyright = COPYRIGHT,
+	.PortCount = 2,
+	.PortDescriptors = clicks_pops_port_descriptors,
+	.PortNames = clicks_pops_port_names,
+	.PortRangeHints = clicks_pops_port_range_hints,
+	.ImplementationData = NULL,
+	.instantiate = clicks_pops_instantiate,
+	.connect_port = clicks_pops_connect_port,
+	.activate = NULL,
+	.run = clicks_pops_run,
+	.run_adding = NULL,
+	.set_run_adding_gain = NULL,
+	.deactivate = NULL,
+	.cleanup = clicks_pops_cleanup,
+};
+
 /***** Core. *****/
 
-LADSPA_Descriptor *descriptors[] = {
+const LADSPA_Descriptor *descriptors[] = {
 	&clip_descriptor,
 	&astro_amp_descriptor,
+	&clicks_pops_descriptor,
 };
 
 const LADSPA_Descriptor *ladspa_descriptor(unsigned long idx) {
